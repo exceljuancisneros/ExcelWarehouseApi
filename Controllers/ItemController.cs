@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ExcelWarehouseApi.Controllers;
 
@@ -31,11 +32,16 @@ public class ItemController : ControllerBase
 
         try
         {
+            var results = new List<dynamic>();
+            
             using var connection = new SqlConnection(connectionString);
             connection.Open();
             _logger.LogInformation("SQL connection opened for item search: {ItemCode}", request.ItemCode);
 
-            var query = @"SELECT TOP 1 * FROM Find_Label_Items 
+            // Remove TOP 1 to return ALL matching items
+            var query = @"SELECT ItemNumber, ItemCodeDesc, Facility, Warehouse, Aisle, Column, 
+                                  Level, Arrow, Spot, Comment, Ver1, Ver2, Ver3, Ver4, Ver5, Ver6, Ver7 
+                          FROM Find_Label_Items 
                           WHERE ItemNumber = @ItemCode 
                              OR ItemCodeDesc = @ItemCode 
                              OR UDF_UPC = @ItemCode";
@@ -44,36 +50,38 @@ public class ItemController : ControllerBase
             command.Parameters.AddWithValue("@ItemCode", request.ItemCode.Trim());
 
             using var reader = command.ExecuteReader();
-            if (reader.Read())
+            while (reader.Read())
             {
-                var item = new
+                results.Add(new
                 {
-                    success = true,
-                    itemNumber = reader["ItemNumber"]?.ToString() ?? "",
-                    itemCodeDesc = reader["ItemCodeDesc"]?.ToString() ?? "",
-                    facility = reader["Facility"]?.ToString() ?? "",
-                    warehouse = reader["Warehouse"]?.ToString() ?? "",
-                    aisle = reader["Aisle"]?.ToString() ?? "",
-                    column = reader["Column"]?.ToString() ?? "",
-                    level = reader["Level"]?.ToString() ?? "",
-                    arrow = reader["Arrow"]?.ToString() ?? "",
-                    spot = reader["Spot"]?.ToString() ?? "",
-                    comment = reader["Comment"]?.ToString() ?? "",
-                    ver1 = reader["Ver1"]?.ToString() ?? "",
-                    ver2 = reader["Ver2"]?.ToString() ?? "",
-                    ver3 = reader["Ver3"]?.ToString() ?? "",
-                    ver4 = reader["Ver4"]?.ToString() ?? "",
-                    ver5 = reader["Ver5"]?.ToString() ?? "",
-                    ver6 = reader["Ver6"]?.ToString() ?? "",
-                    ver7 = reader["Ver7"]?.ToString() ?? ""
-                };
+                    ItemNumber = reader["ItemNumber"]?.ToString() ?? "",
+                    ItemCodeDesc = reader["ItemCodeDesc"]?.ToString() ?? "",
+                    Facility = reader["Facility"]?.ToString() ?? "",
+                    Warehouse = reader["Warehouse"]?.ToString() ?? "",
+                    Aisle = reader["Aisle"]?.ToString() ?? "",
+                    Column = reader["Column"]?.ToString() ?? "",
+                    Level = reader["Level"]?.ToString() ?? "",
+                    Arrow = reader["Arrow"]?.ToString() ?? "",
+                    Spot = reader["Spot"]?.ToString() ?? "",
+                    Comment = reader["Comment"]?.ToString() ?? "",
+                    Ver1 = reader["Ver1"]?.ToString() ?? "",
+                    Ver2 = reader["Ver2"]?.ToString() ?? "",
+                    Ver3 = reader["Ver3"]?.ToString() ?? "",
+                    Ver4 = reader["Ver4"]?.ToString() ?? "",
+                    Ver5 = reader["Ver5"]?.ToString() ?? "",
+                    Ver6 = reader["Ver6"]?.ToString() ?? "",
+                    Ver7 = reader["Ver7"]?.ToString() ?? ""
+                });
+            }
 
-                _logger.LogInformation("Item found: {ItemNumber}", item.itemNumber);
-                return Ok(item);
+            if (results.Count > 0)
+            {
+                _logger.LogInformation("Found {Count} items for code: {ItemCode}", results.Count, request.ItemCode);
+                return Ok(new { success = true, count = results.Count, items = results });
             }
 
             _logger.LogInformation("Item not found for code: {ItemCode}", request.ItemCode);
-            return Ok(new { success = false, message = "Item not found." });
+            return Ok(new { success = false, count = 0, items = new List<object>(), message = "Item not found." });
         }
         catch (Exception ex)
         {
