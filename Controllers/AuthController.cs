@@ -26,12 +26,12 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
             return BadRequest(new { success = false, message = "Username and password are required." });
 
-        var connectionString = _config["SqlConnectionString"];
+        var authConnectionString = _config["AuthConnectionString"];
         var jwtSecret = _config["JwtSecret"];
 
-        if (string.IsNullOrEmpty(connectionString))
+        if (string.IsNullOrEmpty(authConnectionString))
         {
-            _logger.LogError("SqlConnectionString is null or empty");
+            _logger.LogError("AuthConnectionString is null or empty");
             return StatusCode(500, new { success = false, message = "Server configuration error." });
         }
 
@@ -43,7 +43,7 @@ public class AuthController : ControllerBase
 
         try
         {
-            using var connection = new SqlConnection(connectionString);
+            using var connection = new SqlConnection(authConnectionString);
             connection.Open();
             _logger.LogInformation("SQL connection opened successfully");
 

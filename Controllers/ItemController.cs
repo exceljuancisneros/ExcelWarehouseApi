@@ -39,7 +39,7 @@ public class ItemController : ControllerBase
             _logger.LogInformation("SQL connection opened for item search: {ItemCode}", request.ItemCode);
 
             // Remove TOP 1 to return ALL matching items
-            var query = @"SELECT ItemNumber, ItemCodeDesc, Facility, Warehouse, Aisle, Column, 
+            var query = @"SELECT ItemNumber, ItemCodeDesc, Facility, Warehouse, Aisle, [Column], 
                                   Level, Arrow, Spot, Comment, Ver1, Ver2, Ver3, Ver4, Ver5, Ver6, Ver7 
                           FROM Find_Label_Items 
                           WHERE ItemNumber = @ItemCode 
