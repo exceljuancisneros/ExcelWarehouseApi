@@ -402,3 +402,4 @@ C:\Users\jc_x1\OneDrive\Documentos\Visual Studio\Projects\source\repos\Android\E
 C:\Users\jc_x1\OneDrive\Documentos\Visual Studio\Projects\source\repos\Android\ExcelWarehouseApi\bin\Release\net10.0\win-x64\zh-Hans\Microsoft.Data.SqlClient.resources.dll
 C:\Users\jc_x1\OneDrive\Documentos\Visual Studio\Projects\source\repos\Android\ExcelWarehouseApi\bin\Release\net10.0\win-x64\zh-Hant\Microsoft.Data.SqlClient.resources.dll
 C:\Users\jc_x1\OneDrive\Documentos\Visual Studio\Projects\source\repos\Android\ExcelWarehouseApi\obj\Release\net10.0\win-x64\ExcelWarehouseApi.sourcelink.json
+C:\Users\jc_x1\OneDrive\Documentos\Visual Studio\Projects\source\repos\Android\ExcelWarehouseApi\bin\Release\net10.0\win-x64\web.config

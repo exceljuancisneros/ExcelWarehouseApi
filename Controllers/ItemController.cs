@@ -43,11 +43,14 @@ public class ItemController : ControllerBase
                                   Level, Arrow, Spot, Comment, Ver1, Ver2, Ver3, Ver4, Ver5, Ver6, Ver7 
                           FROM Find_Label_Items 
                           WHERE ItemNumber = @ItemCode 
-                             OR ItemCodeDesc = @ItemCode 
-                             OR UDF_UPC = @ItemCode";
+                             OR ItemCodeDesc LIKE @ItemCode 
+                             OR UDF_UPC LIKE @ItemCode";
+
+            // Add wildcards for LIKE queries
+            var itemCodePattern = "%" + request.ItemCode.Trim() + "%";
 
             using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@ItemCode", request.ItemCode.Trim());
+            command.Parameters.AddWithValue("@ItemCode", itemCodePattern);
 
             using var reader = command.ExecuteReader();
             while (reader.Read())

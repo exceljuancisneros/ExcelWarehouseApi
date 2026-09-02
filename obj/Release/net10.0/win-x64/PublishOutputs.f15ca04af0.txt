@@ -1,5 +1,6 @@
 C:\Temp\ExcelWarehouseApiPublish\ExcelWarehouseApi.exe
 C:\Temp\ExcelWarehouseApiPublish\publish\web.config
+C:\Temp\ExcelWarehouseApiPublish\web.config
 C:\Temp\ExcelWarehouseApiPublish\appsettings.Development.json
 C:\Temp\ExcelWarehouseApiPublish\appsettings.json
 C:\Temp\ExcelWarehouseApiPublish\publish\appsettings.Development.json
