@@ -39,18 +39,19 @@ public class ItemController : ControllerBase
             _logger.LogInformation("SQL connection opened for item search: {ItemCode}", request.ItemCode);
 
             // Remove TOP 1 to return ALL matching items
+            // Use exact match for ItemNumber, LIKE for description and UPC
             var query = @"SELECT ItemNumber, ItemCodeDesc, Facility, Warehouse, Aisle, [Column], 
                                   Level, Arrow, Spot, Comment, Ver1, Ver2, Ver3, Ver4, Ver5, Ver6, Ver7 
                           FROM Find_Label_Items 
-                          WHERE ItemNumber = @ItemCode 
-                             OR ItemCodeDesc LIKE @ItemCode 
-                             OR UDF_UPC LIKE @ItemCode";
+                          WHERE ItemNumber = @ExactCode 
+                             OR ItemCodeDesc LIKE @LikeCode 
+                             OR UDF_UPC LIKE @LikeCode";
 
-            // Add wildcards for LIKE queries
-            var itemCodePattern = "%" + request.ItemCode.Trim() + "%";
-
+            var trimmedCode = request.ItemCode.Trim();
+            
             using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@ItemCode", itemCodePattern);
+            command.Parameters.AddWithValue("@ExactCode", trimmedCode);
+            command.Parameters.AddWithValue("@LikeCode", "%" + trimmedCode + "%");
 
             using var reader = command.ExecuteReader();
             while (reader.Read())
