@@ -17,8 +17,8 @@ public class WItemLocationsController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("search")]
-    public IActionResult SearchItem([FromBody] ItemSearchRequest request)
+    [HttpPost("ExcelWarehouse_PrintLabel_SearchItems")]
+    public IActionResult ExcelWarehouse_PrintLabel_SearchItems([FromBody] ItemSearchRequest request)
     {
         if (string.IsNullOrEmpty(request.ItemCode))
             return BadRequest(new { success = false, message = "Item code is required." });
@@ -36,7 +36,7 @@ public class WItemLocationsController : ControllerBase
             
             using var connection = new SqlConnection(connectionString);
             connection.Open();
-            _logger.LogInformation("SQL connection opened for item search: {ItemCode}", request.ItemCode);
+            _logger.LogInformation("ExcelWarehouse_PrintLabel_SearchItems called for: {ItemCode}", request.ItemCode);
 
             // Remove TOP 1 to return ALL matching items
             // Use exact match for ItemNumber, LIKE for description and UPC
@@ -80,16 +80,16 @@ public class WItemLocationsController : ControllerBase
 
             if (results.Count > 0)
             {
-                _logger.LogInformation("Found {Count} items for code: {ItemCode}", results.Count, request.ItemCode);
+                _logger.LogInformation("ExcelWarehouse_PrintLabel_SearchItems found {Count} items for: {ItemCode}", results.Count, request.ItemCode);
                 return Ok(new { success = true, count = results.Count, items = results });
             }
 
-            _logger.LogInformation("Item not found for code: {ItemCode}", request.ItemCode);
+            _logger.LogInformation("ExcelWarehouse_PrintLabel_SearchItems - item not found for: {ItemCode}", request.ItemCode);
             return Ok(new { success = false, count = 0, items = new List<object>(), message = "Item not found." });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error searching for item: {ItemCode}", request.ItemCode);
+            _logger.LogError(ex, "ExcelWarehouse_PrintLabel_SearchItems error for: {ItemCode}", request.ItemCode);
             return StatusCode(500, new { success = false, message = "Server error. Please try again." });
         }
     }
