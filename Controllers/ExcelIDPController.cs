@@ -124,29 +124,50 @@ public class ExcelIDPController : ControllerBase
             using var connection = new SqlConnection(authConnectionString);
             connection.Open();
 
-            var query = @"SELECT AP.PermissionName, UP.[Value]
-                          FROM [ExcelIDP].[dbo].[User_Permissions] AS UP
-                          JOIN [ExcelIDP].[dbo].[App_Permissions] AS AP ON UP.[PermissionId] = AP.Id
-                          WHERE UP.[UserId] = @UserId";
+            // First, get the user's integer ID from _TempAppUsers
+            var getUserIdQuery = "SELECT Id FROM _TempAppUsers WHERE UserName = @UserName AND IsEnabled = 1";
 
-            using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@UserId", request.UserId.Trim());
-
-            using var reader = command.ExecuteReader();
-            var permissions = new List<dynamic>();
-
-            while (reader.Read())
+            using (var getUserCommand = new SqlCommand(getUserIdQuery, connection))
             {
-                permissions.Add(new
+                getUserCommand.Parameters.AddWithValue("@UserName", request.UserId.Trim());
+
+                var userId = getUserCommand.ExecuteScalar();
+
+                if (userId == null)
                 {
-                    permissionName = reader["PermissionName"]?.ToString() ?? "",
-                    value = reader["Value"]?.ToString() ?? ""
-                });
+                    _logger.LogInformation("ExcelIDPController::GetUserPermissions - User not found: {UserId}", request.UserId);
+                    return Ok(new { success = false, message = "User not found.", count = 0, permissions = new List<object>() });
+                }
+
+                int parsedUserId = Convert.ToInt32(userId);
+
+                // Now get permissions using the integer user ID
+                var query = @"SELECT AP.PermissionName, UP.[Value]
+                              FROM [ExcelIDP].[dbo].[User_Permissions] AS UP
+                              JOIN [ExcelIDP].[dbo].[App_Permissions] AS AP ON UP.[PermissionId] = AP.Id
+                              WHERE UP.[UserId] = @UserId";
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@UserId", parsedUserId);
+
+                    using var reader = command.ExecuteReader();
+                    var permissions = new List<dynamic>();
+
+                    while (reader.Read())
+                    {
+                        permissions.Add(new
+                        {
+                            permissionName = reader["PermissionName"]?.ToString() ?? "",
+                            value = reader["Value"]?.ToString() ?? ""
+                        });
+                    }
+
+                    _logger.LogInformation("ExcelIDPController::GetUserPermissions - Found {Count} permissions for user: {UserId}", permissions.Count, request.UserId);
+
+                    return Ok(new { success = true, count = permissions.Count, permissions = permissions });
+                }
             }
-
-            _logger.LogInformation("ExcelIDPController::GetUserPermissions - Found {Count} permissions for user: {UserId}", permissions.Count, request.UserId);
-
-            return Ok(new { success = true, count = permissions.Count, permissions = permissions });
         }
         catch (Exception ex)
         {
