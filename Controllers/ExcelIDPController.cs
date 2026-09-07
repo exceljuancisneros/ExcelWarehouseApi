@@ -105,10 +105,64 @@ public class ExcelIDPController : ControllerBase
             return StatusCode(500, new { success = false, message = "Server error. Please try again." });
         }
     }
+
+    [HttpPost("GetUserPermissions")]
+    public IActionResult GetUserPermissions([FromBody] GetUserPermissionsRequest request)
+    {
+        if (string.IsNullOrEmpty(request.UserId))
+            return BadRequest(new { success = false, message = "UserId is required." });
+
+        var authConnectionString = _config["AuthConnectionString"];
+        if (string.IsNullOrEmpty(authConnectionString))
+        {
+            _logger.LogError("ExcelIDPController::GetUserPermissions - AuthConnectionString is null or empty");
+            return StatusCode(500, new { success = false, message = "Server configuration error." });
+        }
+
+        try
+        {
+            using var connection = new SqlConnection(authConnectionString);
+            connection.Open();
+
+            var query = @"SELECT AP.PermissionName, UP.[Value]
+                          FROM [ExcelIDP].[dbo].[User_Permissions] AS UP
+                          JOIN [ExcelIDP].[dbo].[App_Permissions] AS AP ON UP.[PermissionId] = AP.Id
+                          WHERE UP.[UserId] = @UserId";
+
+            using var command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@UserId", request.UserId.Trim());
+
+            using var reader = command.ExecuteReader();
+            var permissions = new List<dynamic>();
+
+            while (reader.Read())
+            {
+                permissions.Add(new
+                {
+                    permissionName = reader["PermissionName"]?.ToString() ?? "",
+                    value = reader["Value"]?.ToString() ?? ""
+                });
+            }
+
+            _logger.LogInformation("ExcelIDPController::GetUserPermissions - Found {Count} permissions for user: {UserId}", permissions.Count, request.UserId);
+
+            return Ok(new { success = true, count = permissions.Count, permissions = permissions });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ExcelIDPController::GetUserPermissions - Error for user: {UserId}", request.UserId);
+            return StatusCode(500, new { success = false, message = "Server error. Please try again." });
+        }
+    }
 }
 
 public class LoginRequest
 {
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+}
+
+public class GetUserPermissionsRequest
+{
+    public string UserId { get; set; } = string.Empty;
 }
