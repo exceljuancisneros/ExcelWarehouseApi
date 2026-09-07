@@ -53,15 +53,24 @@ public class ExcelIDPController : ControllerBase
             command.Parameters.AddWithValue("@UserName", request.UserName.Trim());
             command.Parameters.AddWithValue("@Password", request.Password.Trim());
 
-            var result = command.ExecuteScalar();
+            using var reader = command.ExecuteReader();
 
-            if (result == null)
+            int userId = 0;
+            string userName = "";
+
+            if (reader.Read())
+            {
+                userId = Convert.ToInt32(reader["Id"]);
+                userName = reader["UserName"]?.ToString() ?? "";
+            }
+
+            if (userId == 0)
             {
                 _logger.LogInformation("ExcelIDPController::VerifyUserCredentials - Login failed for user: {UserName}", request.UserName);
                 return Ok(new { success = false, message = "Invalid username or password." });
             }
 
-            _logger.LogInformation("ExcelIDPController::VerifyUserCredentials - Login successful for user: {UserName}", request.UserName);
+            _logger.LogInformation("ExcelIDPController::VerifyUserCredentials - Login successful for user: {UserName} (Id: {UserId})", userName, userId);
 
             // Generate JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -69,8 +78,8 @@ public class ExcelIDPController : ControllerBase
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, request.UserName.Trim()),
-                new Claim(ClaimTypes.Name, request.UserName.Trim())
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Name, userName.Trim())
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -86,6 +95,8 @@ public class ExcelIDPController : ControllerBase
             return Ok(new
             {
                 success = true,
+                userId = userId,
+                userName = userName,
                 token = tokenString,
                 message = "Login successful."
             });
