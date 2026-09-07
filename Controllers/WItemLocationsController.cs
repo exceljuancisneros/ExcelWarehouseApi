@@ -6,12 +6,12 @@ namespace ExcelWarehouseApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ItemController : ControllerBase
+public class WItemLocationsController : ControllerBase
 {
     private readonly IConfiguration _config;
-    private readonly ILogger<ItemController> _logger;
+    private readonly ILogger<WItemLocationsController> _logger;
 
-    public ItemController(IConfiguration config, ILogger<ItemController> logger)
+    public WItemLocationsController(IConfiguration config, ILogger<WItemLocationsController> logger)
     {
         _config = config;
         _logger = logger;
