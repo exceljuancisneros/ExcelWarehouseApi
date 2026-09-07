@@ -9,19 +9,19 @@ namespace ExcelWarehouseApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthController : ControllerBase
+public class ExcelIDPController : ControllerBase
 {
     private readonly IConfiguration _config;
-    private readonly ILogger<AuthController> _logger;
+    private readonly ILogger<ExcelIDPController> _logger;
 
-    public AuthController(IConfiguration config, ILogger<AuthController> logger)
+    public ExcelIDPController(IConfiguration config, ILogger<ExcelIDPController> logger)
     {
         _config = config;
         _logger = logger;
     }
 
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    [HttpPost("VerifyUserCredentials")]
+    public IActionResult VerifyUserCredentials([FromBody] LoginRequest request)
     {
         if (string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
             return BadRequest(new { success = false, message = "Username and password are required." });
@@ -31,13 +31,13 @@ public class AuthController : ControllerBase
 
         if (string.IsNullOrEmpty(authConnectionString))
         {
-            _logger.LogError("AuthConnectionString is null or empty");
+            _logger.LogError("ExcelIDPController::VerifyUserCredentials - AuthConnectionString is null or empty");
             return StatusCode(500, new { success = false, message = "Server configuration error." });
         }
 
         if (string.IsNullOrEmpty(jwtSecret))
         {
-            _logger.LogError("JwtSecret is null or empty");
+            _logger.LogError("ExcelIDPController::VerifyUserCredentials - JwtSecret is null or empty");
             return StatusCode(500, new { success = false, message = "Server configuration error." });
         }
 
@@ -57,11 +57,11 @@ public class AuthController : ControllerBase
 
             if (result == null)
             {
-                _logger.LogInformation("Login failed - invalid credentials for user: {UserName}", request.UserName);
+                _logger.LogInformation("ExcelIDPController::VerifyUserCredentials - Login failed for user: {UserName}", request.UserName);
                 return Ok(new { success = false, message = "Invalid username or password." });
             }
 
-            _logger.LogInformation("Login successful for user: {UserName}", request.UserName);
+            _logger.LogInformation("ExcelIDPController::VerifyUserCredentials - Login successful for user: {UserName}", request.UserName);
 
             // Generate JWT Token
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -92,7 +92,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Login error for user: {UserName}", request.UserName);
+            _logger.LogError(ex, "ExcelIDPController::VerifyUserCredentials - Error for user: {UserName}", request.UserName);
             
             // Write error to file for debugging
             try
