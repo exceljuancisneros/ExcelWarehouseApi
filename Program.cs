@@ -1,38 +1,35 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
 builder.Services.AddControllers();
 
-// Configure JWT Authentication
-var jwtSecret = builder.Configuration["JwtSecret"] ?? "DefaultSecretKeyChangeThisInProduction2026!";
-var key = Encoding.ASCII.GetBytes(jwtSecret);
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// Autenticación delegada a ExcelIDPManager (OIDC). El access token es un JWT firmado sin cifrar
+// (DisableAccessTokenEncryption del lado del IdP), así que se valida localmente contra las
+// llaves públicas que expone /.well-known/openid-configuration — sin necesidad de una clave
+// simétrica compartida ni de contactar al IdP en cada request.
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
-    };
-});
+        options.Authority = builder.Configuration["Oidc:Authority"];
+        options.RequireHttpsMetadata = false; // servidor de pruebas sin HTTPS
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Oidc:Authority"],
+            ValidateAudience = false, // ExcelIDPManager no emite 'aud' — no hay resources configurados todavía
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+        options.MapInboundClaims = false;
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

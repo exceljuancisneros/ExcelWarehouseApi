@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
 namespace ExcelWarehouseApi.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class WItemLocationsController : ControllerBase
@@ -17,6 +19,7 @@ public class WItemLocationsController : ControllerBase
         _logger = logger;
     }
 
+    [Authorize(Roles = "PrintLabels")]
     [HttpPost("ExcelWarehouse_PrintLabel_SearchItems")]
     public IActionResult ExcelWarehouse_PrintLabel_SearchItems([FromBody] ItemSearchRequest request)
     {
